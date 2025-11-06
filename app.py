@@ -3,7 +3,7 @@ from flask_cors import CORS
 import io
 import os
 import logging
-from weasyprint import HTML, CSS
+from weasyprint import HTML
 import markdown
 
 app = Flask(__name__)
@@ -53,39 +53,39 @@ def create_pdf_from_html(html_content, css_content=''):
         logger.info("Création du PDF avec WeasyPrint...")
         
         # Créer le HTML complet
-        full_html = f"""
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Newsletter</title>
-            <style>
-                {css_content}
-            </style>
-        </head>
-        <body>
-            {html_content}
-        </body>
-        </html>
-        """
+        full_html = f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter</title>
+    <style>
+        {css_content}
+    </style>
+</head>
+<body>
+    {html_content}
+</body>
+</html>"""
         
-        # Créer un buffer pour le PDF
-        pdf_buffer = io.BytesIO()
+        logger.info(f"HTML complet créé, longueur: {len(full_html)}")
         
-        # CORRECTION CRITIQUE : Utiliser HTML.write_pdf() correctement
-        # WeasyPrint attend HTML(string=...) ou HTML(filename=...)
+        # Créer le document HTML avec WeasyPrint
         html_doc = HTML(string=full_html)
         
-        # Générer le PDF dans le buffer
-        # write_pdf() retourne bytes, on les écrit dans le buffer
-        pdf_bytes = html_doc.write_pdf()
-        pdf_buffer.write(pdf_bytes)
+        logger.info("Document HTML créé, génération du PDF...")
         
-        # Repositionner au début du buffer
+        # CORRECTION: Utiliser write_pdf avec target=None pour retourner bytes
+        # Au lieu de passer un buffer, on récupère directement les bytes
+        pdf_bytes = html_doc.write_pdf()
+        
+        logger.info(f"✅ PDF généré, taille: {len(pdf_bytes)} bytes")
+        
+        # Créer un buffer et y écrire les bytes
+        pdf_buffer = io.BytesIO(pdf_bytes)
         pdf_buffer.seek(0)
         
-        logger.info(f"✅ PDF créé avec succès, taille: {len(pdf_bytes)} bytes")
+        logger.info("✅ Buffer PDF créé avec succès")
         
         return pdf_buffer
         
@@ -172,7 +172,7 @@ def health():
     return {
         'status': 'healthy',
         'service': 'PDF Converter API (WeasyPrint)',
-        'version': '2.0'
+        'version': '2.1'
     }
 
 
